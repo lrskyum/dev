@@ -1,0 +1,16 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'application'
+
+mainClassName = 'com.lrskyum.stocks.Main'
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.littleshoot:littleproxy:1.1.0-beta1'
+	testCompile 'junit:junit:4.12'
+}
