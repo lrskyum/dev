@@ -2,3 +2,7 @@
 *.iml
 *.iws
 .idea
+.gradle
+build
+out
+.gitignore
