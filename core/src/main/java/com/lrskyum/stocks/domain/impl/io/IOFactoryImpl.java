@@ -8,7 +8,14 @@ import java.util.Arrays;
  *
  */
 public class IOFactoryImpl implements IOFactory {
-    private static final File dataDir = new File("C:/Data/Stocks");
+    private static final String dirPath = "/Stocks/Data";
+    private static File dataDir;
+
+    static {
+        final String userHome = System.getProperty("user.home");
+        dataDir = new File(userHome, dirPath);
+        dataDir.mkdirs();
+    }
 
     @Override
     public <T> RepositoryObjectOutput<T> createOutputStream(String name) throws IOException {
