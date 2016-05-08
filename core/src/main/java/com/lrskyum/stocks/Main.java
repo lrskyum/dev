@@ -9,12 +9,11 @@ import com.lrskyum.stocks.domain.*;
 import com.lrskyum.stocks.domain.impl.TimeSeriesImpl;
 import com.lrskyum.stocks.domain.impl.strategy.SmaTradingStrategy;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.Period;
+import java.io.IOException;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,12 +23,45 @@ public class Main {
     private static final double aKurtagePercent = 0.5;
     private static final DataFactory aDataFactory = new DataFactory();
 
-//    public static class CurrencyConversion {
-//        public TimeSeries<? extends Quote> convert(Currency targetForeign, TimeSeries<? extends Quote> source) throws IOException {
-//            TimeSeries<? extends Quote> targetCurrencySeries = aDataFactory.createCurrencyQuoteSource().getQuotes(targetForeign);
-//
-//        }
-//    }
+    public interface Production {
+        Quote apply(Quote q1, Quote q2);
+    }
+
+    public class ProdutionImpl implements Production {
+        @Override
+        public Quote apply(Quote q1, Quote q2) {
+            return null; // FXIME
+        }
+    }
+
+    public static TimeSeries<Quote> convert(TimeSeries<? extends Quote> quote, TimeSeries<? extends Quote> currency, Production p) throws IOException {
+        TimeSeries<Quote> result = aDataFactory.createTimeSeries(currency.getCurrency());
+
+        Iterator<? extends Quote> i1 = quote.iterator();
+        Iterator<? extends Quote> i2 = currency.iterator();
+        Quote q1, q2 = null;
+        outer:
+        while (i1.hasNext() && i2.hasNext()) {
+            q1 = i1.next();
+            int cmp = -1; // Anything but 0
+            while (q2 == null && i2.hasNext()) {
+                q2 = i2.next();
+                cmp = q1.getDateTime().compareTo(q2.getDateTime());
+                if (cmp == 0) {
+                    // Match, same date, so put in result list
+                    result.add(p.apply(q1, q2));
+                    break;
+                } else if (cmp > 0) {
+                    // s1 is lagging, so get next q1 but keep q2
+                    break outer;
+                } else {
+                    // s2 is lagging, so get next q2 and keep q1
+                }
+            }
+            q2 = null;
+        }
+        return result;
+    }
 
     public static void main(String[] args) throws Exception {
         final LocalTime start = LocalTime.now();
