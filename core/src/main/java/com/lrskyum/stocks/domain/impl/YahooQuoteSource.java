@@ -10,9 +10,7 @@ import com.lrskyum.stocks.domain.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.time.DayOfWeek;
 import java.time.Duration;
@@ -73,26 +71,18 @@ public class YahooQuoteSource {
         final int month = from.getMonth().getValue()-1; // Month is zero indexed at yahoo.
         final int year = from.getYear();
 
+        final String symbol = URLEncoder.encode(id);
+        final URL url = new URL("http://ichart.finance.yahoo.com/table.csv?s="+symbol+"&g=d&a="+month+"&b="+day+"&c="+year+"&ignore=.csv");
         final TimeSeries<HistoricQuote> quotes = new TimeSeriesImpl<>(currency, 6000);
-        URLConnection urlConn = null;
-        InputStreamReader inStream = null;
-        BufferedReader buff = null;
 
-        try {
-            final String symbol = URLEncoder.encode(id);
-            final URL url = new URL("http://ichart.finance.yahoo.com/table.csv?s="+symbol+"&g=d&a="+month+"&b="+day+"&c="+year+"&ignore=.csv");
-
-            urlConn = url.openConnection();
-            inStream = new InputStreamReader(urlConn.getInputStream());
-            buff = new BufferedReader(inStream);
-            String line = null;
-            while ((line = buff.readLine()) != null) {
+        try (BufferedReader buff = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()))) {
+            for (String line = buff.readLine(); line != null; line = buff.readLine()) {
                 // Skip header line
                 if (line.startsWith("Date")) {
                     continue;
                 }
 
-                String[] fields = line.split("[,]");
+                final String[] fields = line.split("[,]");
                 // Date,Open,High,Low,Close,Volume,Adj Close
                 if (fields.length == 7) {
                     try {
@@ -112,20 +102,7 @@ public class YahooQuoteSource {
                 }
             }
         }
-        catch (MalformedURLException e) {
-            throw new IOException(e);
-        }
-        finally {
-            try {
-                if (buff != null) {
-                    buff.close();
-                }
-            }
-            catch (IOException e) {
-                System.err.println(e);
-            }
-        }
-        Collections.reverse(quotes);
+        Collections.reverse(quotes); // TODO: use sort to normalize and make independent of source order
         return quotes;
     }
 }

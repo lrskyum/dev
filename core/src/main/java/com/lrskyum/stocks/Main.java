@@ -26,10 +26,6 @@ public class Main {
     private static final double aKurtagePercent = 0.5;
     private static final DataFactory aDataFactory = new DataFactory();
 
-    public interface Production {
-        Quote apply(Quote q1, Quote q2);
-    }
-
     public static void main(String[] args) throws Exception {
         final LocalTime start = LocalTime.now();
 
@@ -39,11 +35,14 @@ public class Main {
         StockQuoteSource stockQuoteSource = aDataFactory.createStockQuoteSource();
         CurrencyQuoteSource currencyQuoteSource = aDataFactory.createCurrencyQuoteSource();
         TimeSeries<? extends Quote> stockQuotes = stockQuoteSource.getQuotes(aDataFactory.createStock(aStock));
-        TimeSeries<? extends Quote> currencyQuotes = currencyQuoteSource.getQuotes(Currency.DKK);
         TimeSeries<? extends Quote> stockQuoteList = stockQuotes
             .stream().filter(q -> q.getDateTime().compareTo(origin.atStartOfDay()) >= 0)
             .collect(Collectors.<Quote, TimeSeries<Quote>>toCollection(() -> new TimeSeriesImpl<>(stockQuotes.getCurrency(), stockQuotes.size())));
-        TimeSeries<? extends Quote> normalizedQuotes = new CurrencyConversion(aDataFactory).normalize(stockQuoteList, currencyQuotes);
+
+        TimeSeries<? extends Quote> dkk = currencyQuoteSource.getQuotes(Currency.DKK);
+        TimeSeries<? extends Quote> gbp = currencyQuoteSource.getQuotes(Currency.GBP);
+        TimeSeries<? extends Quote> normalizedQuotes = new CurrencyConversion(aDataFactory).normalize(stockQuoteList, dkk);
+        TimeSeries<? extends Quote> denormalizedQuotes = new CurrencyConversion(aDataFactory).denormalize(normalizedQuotes, gbp);
         final List<TradingStrategy> strategies = Collections.synchronizedList(new ArrayList<>());
 
         IntStream.range(10, 189)
@@ -51,7 +50,7 @@ public class Main {
                 .forEach(i -> {
                     IntStream.range(i + 10, 200)
                             .forEach(j -> {
-                                TradingStrategy s = new SmaTradingStrategy(aDataFactory, i, j, normalizedQuotes).setMaxTrades(25);
+                                TradingStrategy s = new SmaTradingStrategy(aDataFactory, i, j, denormalizedQuotes).setMaxTrades(25);
                                 Gain g = s.getGain();
                                 if (g != null) {
                                     strategies.add(s);
