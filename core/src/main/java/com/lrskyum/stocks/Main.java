@@ -8,7 +8,7 @@ package com.lrskyum.stocks;
 import com.lrskyum.stocks.domain.*;
 import com.lrskyum.stocks.domain.impl.TimeSeriesImpl;
 import com.lrskyum.stocks.domain.impl.calc.CurrencyConversion;
-import com.lrskyum.stocks.domain.impl.strategy.SmaTradingStrategy;
+import com.lrskyum.stocks.domain.impl.tradestrategy.SmaTradingStrategy;
 
 import java.time.Duration;
 import java.time.LocalDate;

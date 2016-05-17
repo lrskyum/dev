@@ -1,4 +1,4 @@
-package com.lrskyum.stocks.domain.impl.strategy;
+package com.lrskyum.stocks.domain.impl.tradestrategy;
 
 import com.lrskyum.stocks.domain.*;
 import com.lrskyum.stocks.domain.impl.calc.MovingAvgTradeSignalsCalculation;
